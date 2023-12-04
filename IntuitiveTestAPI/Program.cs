@@ -145,7 +145,7 @@ namespace IntuitiveTestAPI
             //Countries Endpoints
             app.MapGet("/api/countries", async (TravelContext context) => await GetAllCountries(context));
 
-            app.MapPost("/api/countries", async (TravelContext context, Country country) => {
+            app.MapPost("/api/countries", async (TravelContext context, CountryDTO country) => {
 
                 if (!string.IsNullOrWhiteSpace(country.Name))
                 {
@@ -153,9 +153,10 @@ namespace IntuitiveTestAPI
 
                     if (!isCountryExist)
                     {
-                        context.Countries.Add(country);
+                        var countryToAdd= new Country { Name = country.Name };
+                        context.Countries.Add(countryToAdd);
                         await context.SaveChangesAsync();
-                        return Results.Created($"/{country.GeographyLevel1ID}", new {country.GeographyLevel1ID, country.Name});
+                        return Results.Created($"/{countryToAdd.GeographyLevel1ID}", new {countryToAdd.GeographyLevel1ID, countryToAdd.Name});
                     }
                     else
                     {
@@ -222,13 +223,20 @@ namespace IntuitiveTestAPI
 
             //Routes Endpoints
             app.MapGet("api/routes", async(TravelContext context) => {
-                var routes = await context.Routes.Select(r => new RouteInputModel { Id = r.RouteID, DepartureAirportID = r.DepartureAirportID, ArrivalAirportID = r.ArrivalAirportID }).ToListAsync();
 
-                var routeWithGroups = await context.RouteWithGroup.Select(r => new RouteInputModel { Id= r.RouteWithGroupID, DepartureAirportGroupID= r.DepartureAirportGroupID, ArrivalAirportGroupID=r.ArrivalAirportGroupID }).ToListAsync();
+                var routes = await context.Routes.Select(r => new { r.RouteID, r.DepartureAirportID, r.ArrivalAirportID }).ToListAsync();
 
-                routes.AddRange(routeWithGroups);
+                var routeWithGroups = await context.RouteWithGroup.Select(r => new { r.RouteWithGroupID, r.DepartureAirportGroupID, r.ArrivalAirportGroupID }).ToListAsync();
 
-                return Results.Ok(routes);
+                // Create a combined result
+                var result = new
+                {
+                    Routes = routes,
+                    RoutesWithGroups = routeWithGroups
+                };
+
+                return Results.Ok(result);
+
             });
 
             app.MapPost("api/routes", async (TravelContext context, RouteInputModel routeInputModel) => {

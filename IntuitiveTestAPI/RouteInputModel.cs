@@ -1,8 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+
 namespace IntuitiveTestAPI
 {
     public class RouteInputModel
     {
+        [JsonIgnore]
         public int Id { get; set; }
         public int DepartureAirportID { get;set; }
 
